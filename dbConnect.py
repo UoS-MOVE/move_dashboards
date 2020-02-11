@@ -12,17 +12,70 @@ import pyodbc
 SQL_CONN_STR = 'DSN=Salford-SQL-Server;'
 
 # Function definitiions for DB functions
-def fetchData():
-	print('Fetch data function')
-	TABLE = 'sensorData'	
+def dbInit():
+	try:
+		print('Connecting to database...')
+		# Create a new connection to the SQL Server using the prepared connection string
+		cnxn = pyodbc.connect(SQL_CONN_STR)
+	except pyodbc.Error as e:
+		# Print error is one should occur
+		sqlstate = e.args[1]
+		print("An error occurred connecting to the database: " + sqlstate)
+		abort(500)
+	else:
+		print('Successfully connected to database')
+		return cnxn
+def fetchData(dbTable, dbColumn, dbColumnValue):
+	print('Fetching senor data... ')
+	TABLE = dbTable
+	COLUMN = dbColumn
+	COLUMN_VALUE = dbColumnValue
+
+	# Establish a connection to the database using the prepared function and declare a new cursor from it
+	conn = dbInit()
+	cursor = conn.cursor()
+
+	# Select all available data from a specified table using specified parameters to filter the data
+	cursor.execute("SELECT * FROM ? WHERE ? = ?", TABLE, COLUMN, COLUMN_VALUE)
+	result = cursor.fetchall()
+	conn.close()
+	return result
+
 def updateData():
-	print('Update data function')
+	print('Updating data... (currently unused)')
 	TABLE = 'gatewayData'
-def fetchUser():
-	print('Fetch user function')
+
+	# Establish a connection to the database using the prepared function and declare a new cursor from it
+	conn = dbInit()
+	cursor = conn.cursor()
+
+def fetchUsername(uName):
+	print('Fetching username... ')
 	TABLE = 'moveUsers'
+	USER = uName
 
+	# Establish a connection to the database using the prepared function and declare a new cursor from it
+	conn = dbInit()
+	cursor = conn.cursor()
 
-# Execute query on database
-#cursor.execute("INSERT INTO " + dbTable + columns + " VALUES (" + str(gatewayID) + ",'" + str(gatewayName) + "'," + str(accountID) + "," + str(networkID) + "," + str(messageType) + "," + str(gatewayPower) + "," + str(batteryLevel) + ",'" + str(gatewayDate) + "'," + str(gatewayCount) + "," + str(signalStrength) + "," + str(pendingChange) + ")")
-#cursor.execute("INSERT INTO " + dbTable + columns + " values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [gatewayID, str(gatewayName), accountID, messageType, gatewayPower, batteryLevel, datetime.date(gatewayDate), gatewayCount, signalStrength, pendingChange])
+	# Select a specified username from the user table and return the result, used for checking the existence of a user 
+	cursor.execute("SELECT user FROM ? WHERE user = ?", TABLE, USER).rowcount
+	usrCount = cursor.fetchall()
+	conn.close()
+	return usrCount
+def fetchUserPWD(uName):
+	print('Fetching user credentials... ')
+	TABLE = 'moveUsers'
+	USER = uName
+
+	# Establish a connection to the database using the prepared function and declare a new cursor from it
+	conn = dbInit()
+	cursor = conn.cursor()
+
+	# Select the specified user's credentials such as hashed password and salt for authorisation
+	cursor.execute("SELECT user, password, salt FROM ? WHERE user = ?", TABLE, USER)
+	usrCreds = cursor.fetchall()
+	# Close the open database connetion
+	conn.close()
+	# Return the retrieved values
+	return usrCreds
