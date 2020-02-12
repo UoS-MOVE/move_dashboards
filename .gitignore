@@ -1,3 +1,4 @@
 .moveDashVenv
 .vscode
 .usrCreds
+__pycache__
