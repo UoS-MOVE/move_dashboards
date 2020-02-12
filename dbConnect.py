@@ -25,6 +25,18 @@ def dbInit():
 	else:
 		print('Successfully connected to database')
 		return cnxn
+def fetchSensorNames(dbTable):
+	print('Fetching sensor names... ')
+
+	# Establish a connection to the database using the prepared function and declare a new cursor from it
+	conn = dbInit()
+	cursor = conn.cursor()
+
+	# Select all available data from a specified table using specified parameters to filter the data
+	cursor.execute("SELECT sensorName FROM ?", dbTable)
+	result = cursor.fetchall()
+	conn.close()
+	return result
 def fetchData(dbTable, dbColumn, dbColumnValue):
 	print('Fetching senor data... ')
 	TABLE = dbTable
@@ -36,7 +48,7 @@ def fetchData(dbTable, dbColumn, dbColumnValue):
 	cursor = conn.cursor()
 
 	# Select all available data from a specified table using specified parameters to filter the data
-	cursor.execute("SELECT * FROM ? WHERE ? = ?", TABLE, COLUMN, COLUMN_VALUE)
+	cursor.execute("SELECT sensorValue, messageDate FROM ? WHERE ? = ?", TABLE, COLUMN, COLUMN_VALUE)
 	result = cursor.fetchall()
 	conn.close()
 	return result
