@@ -21,7 +21,8 @@ def dbInit():
 		# Print error is one should occur
 		sqlstate = e.args[1]
 		print("An error occurred connecting to the database: " + sqlstate)
-		abort(500)
+		#abort(500)
+		return 500
 	else:
 		print('Successfully connected to database')
 		return cnxn
@@ -33,22 +34,24 @@ def fetchSensorNames(dbTable):
 	cursor = conn.cursor()
 
 	# Select all available data from a specified table using specified parameters to filter the data
-	cursor.execute("SELECT sensorName FROM ?", dbTable)
+	cursor.execute("SELECT DISTINCT sensorName FROM ?", dbTable)
 	result = cursor.fetchall()
 	conn.close()
 	return result
-def fetchData(dbTable, dbColumn, dbColumnValue):
+def fetchData(dbTable, dbColumn, dbColumnValue, startDate, endDate):
 	print('Fetching senor data... ')
 	TABLE = dbTable
 	COLUMN = dbColumn
 	COLUMN_VALUE = dbColumnValue
+	START_DATE = startDate
+	END_DATE = endDate
 
 	# Establish a connection to the database using the prepared function and declare a new cursor from it
 	conn = dbInit()
 	cursor = conn.cursor()
 
 	# Select all available data from a specified table using specified parameters to filter the data
-	cursor.execute("SELECT sensorValue, messageDate FROM ? WHERE ? = ?", TABLE, COLUMN, COLUMN_VALUE)
+	cursor.execute("SELECT plotValues, messageDate FROM ? WHERE ? = ? AND messageDate < ? AND messageDate > ?", TABLE, COLUMN, COLUMN_VALUE, START_DATE, END_DATE)
 	result = cursor.fetchall()
 	conn.close()
 	return result
