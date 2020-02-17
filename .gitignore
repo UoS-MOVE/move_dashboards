@@ -2,3 +2,4 @@
 .vscode
 .usrCreds
 __pycache__
+.dbCreds
