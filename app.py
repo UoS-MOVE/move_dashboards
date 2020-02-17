@@ -15,6 +15,10 @@ import pyodbc
 import traceback 
 import datetime as dt
 
+from datetime import date
+from datetime import datetime
+
+
 import pandas as pd
 import json
 
@@ -22,8 +26,10 @@ import json
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
-import dash_auth 
+import dash_auth
 from dash.dependencies import Input, Output
+import plotly.graph_objects as go
+
 
 # Import process scheduler for funning funtions concurrently
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -34,14 +40,15 @@ import dbConnect
 
 # Variable declaration
 DB_TABLE = "sensorData"
-START_DATE = dt.date.now - dt.date.timedelta(days=7)
-END_DATE = dt.date.now
+END_DATE = dt.date.today()
+START_DATE = dt.date.today() - dt.timedelta(days=7)
 
 
 # Pull the initial values
-sensorNames = pd.read_sql(dbConnect.fetchSensorNames(DB_TABLE))
-sensorData = pd.read_sql(dbConnect.fetchData(DB_TABLE, "sensorName", "plotValues", "", START_DATE, END_DATE))
-
+#sensorNames = pd.DataFrame(dbConnect.fetchSensorNames(DB_TABLE))
+#sensorData = pd.DataFrame(dbConnect.fetchData(DB_TABLE))
+sensorNames = dbConnect.fetchSensorNames(DB_TABLE)
+sensorData = dbConnect.fetchData(DB_TABLE)
 
 
 
@@ -50,6 +57,21 @@ with open(".usrCreds") as f:
 	usrCreds = json.load(f)
 
 #external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
+def generate_table(dataframe, max_rows=10):
+    return html.Table(
+        # Header
+        [html.Tr([html.Th(col) for col in dataframe.columns])] +
+
+        # Body
+        [html.Tr([
+            html.Td(dataframe.iloc[i][col]) for col in dataframe.columns
+        ]) for i in range(min(len(dataframe), max_rows))]
+    )
+
+
+
+
+
 
 #app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 app = dash.Dash()
@@ -61,6 +83,7 @@ auth = dash_auth.BasicAuth(
 	usrCreds
 )
 
+fig = go.Figure(data = [go.Scatter(x=sensorData.messageDate, y=sensorData.plotValues)])
 
 app.layout = html.Div(children=[
 	html.H1(children='Hello Dash'),
@@ -71,15 +94,12 @@ app.layout = html.Div(children=[
 
 	html.Div(children=[
 		html.Label('Sensor Selector'),
-			dcc.Dropdown(
-				id='sensor-select-dropdown',
-				options=[
-					{'label': 'Test', 'value': 'NA'},
-					{'label': 'Test2', 'value': 'NA2'},
-					{'label': 'Test3', 'value': 'NA3'},
-					{'label': 'Test4', 'value': 'NA4'}
-				]
-			),
+		dcc.Dropdown(id='sensor-select-dropdown', 
+		options=[
+			{'label': i, 'value': i} for i in sensorNames.sensorName.unique()
+		], 
+		multi=True )
+		]),
 
 		dcc.DatePickerRange(
 			id='date-picker',
@@ -88,7 +108,6 @@ app.layout = html.Div(children=[
 			start_date=START_DATE,
 			end_date=END_DATE,
 		),
-	]),
 
 
 	dcc.Graph(
@@ -108,7 +127,24 @@ app.layout = html.Div(children=[
 		min=sensorData['messageDate'].min(),
 		max=sensorData['messageDate'].max(),
 		value=sensorData['messageDate'].min(),
-	)
+	),
+
+
+	dcc.Graph(
+		id='example-graph-2',
+		figure=fig
+	),
+
+
+
+	html.H4(children='Sensors'),
+    dcc.Dropdown(id='dropdown', options=[
+        {'label': i, 'value': i} for i in sensorNames.sensorName.unique()
+    ], multi=True, placeholder='Filter by sensor name...'),
+    html.Div(id='table-container')
+	
+
+
 ])
 
 
@@ -122,6 +158,18 @@ def update_figure(selected_date):
 
 
 
+@app.callback(
+    dash.dependencies.Output('table-container', 'children'),
+    [dash.dependencies.Input('dropdown', 'value')])
+def display_table(dropdown_value):
+    if dropdown_value is None:
+        return generate_table(sensorNames)
+
+    dff = sensorData[sensorNames.sensorName.str.contains('|'.join(dropdown_value))]
+    return generate_table(dff)
+
+
+
 # Define scheduled functions
 sched = BackgroundScheduler()
 
@@ -129,12 +177,12 @@ sched = BackgroundScheduler()
 @sched.scheduled_job('interval', minutes=60)
 def timed_job():
 	print('This job is run every minute.')
-	sensorNames = pd.read_sql(dbConnect.fetchSensorNames(DB_TABLE))
+	#sensorNames = pd.read_sql(dbConnect.fetchSensorNames(DB_TABLE))
 # Fetch sensor data every 15 minutes from the database
 @sched.scheduled_job('interval', minutes=15)
 def timed_job():
 	print('This job is run every 15 minutes.')
-	sensorData = pd.read_sql(dbConnect.fetchData(DB_TABLE, "sensorName", sensorNames['sensorName'].at[0], START_DATE, END_DATE))
+	#sensorData = pd.read_sql(dbConnect.fetchData(DB_TABLE, "sensorName", sensorNames['sensorName'].at[0], START_DATE, END_DATE))
 
 # Start the scheduler
 sched.start()
