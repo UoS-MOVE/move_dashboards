@@ -6,10 +6,17 @@
 
 
 import pyodbc
+import json
+
+import pandas as pd
+
+#SQL Server connection info
+with open(".dbCreds") as f:
+	dbCreds = json.load(f)
 
 
 # Formatted connection string for the SQL DB.
-SQL_CONN_STR = 'DSN=Salford-SQL-Server;'
+SQL_CONN_STR = 'DSN=Salford-SQL-Server;Database=salfordMOVE;Trusted_Connection=no;UID='+dbCreds['UNAME']+';PWD='+dbCreds['PWD']+';'
 
 # Function definitiions for DB functions
 def dbInit():
@@ -32,29 +39,43 @@ def fetchSensorNames(dbTable):
 	# Establish a connection to the database using the prepared function and declare a new cursor from it
 	conn = dbInit()
 	cursor = conn.cursor()
-
+	
 	# Select all available data from a specified table using specified parameters to filter the data
-	cursor.execute("SELECT DISTINCT sensorName FROM ?", dbTable)
-	result = cursor.fetchall()
+	#cursor.execute("SELECT DISTINCT sensorName FROM " + dbTable + "")
+	
+	result = pd.read_sql("SELECT DISTINCT sensorName FROM " + dbTable + "", conn)
+	
+	#result = cursor.fetchall()
+	#result = pd.DataFrame(cursor.fetchall())
+	#result.columns = cursor.columns()
 	conn.close()
 	return result
-def fetchData(dbTable, dbColumn, dbColumnValue, startDate, endDate):
+
+def fetchData(dbTable):
 	print('Fetching senor data... ')
-	TABLE = dbTable
-	COLUMN = dbColumn
-	COLUMN_VALUE = dbColumnValue
-	START_DATE = startDate
-	END_DATE = endDate
 
 	# Establish a connection to the database using the prepared function and declare a new cursor from it
 	conn = dbInit()
 	cursor = conn.cursor()
 
 	# Select all available data from a specified table using specified parameters to filter the data
-	cursor.execute("SELECT plotValues, messageDate FROM ? WHERE ? = ? AND messageDate < ? AND messageDate > ?", TABLE, COLUMN, COLUMN_VALUE, START_DATE, END_DATE)
-	result = cursor.fetchall()
+	#cursor.execute("SELECT sensorName, plotValues, messageDate FROM " + dbTable + " WHERE messageDate < ? AND messageDate > ?", startDate, endDate)
+	#cursor.execute("SELECT sensorName, plotValues, messageDate FROM " + dbTable + "")
+	
+	#result = pd.read_sql("SELECT sensorName, plotValues, messageDate FROM " + dbTable + " WHERE messageDate < ? AND messageDate > ?", conn, params={ startDate, endDate})
+	result = pd.read_sql("SELECT sensorName, plotValues, messageDate FROM " + dbTable + "", conn)
+	
+	#result = cursor.fetchall()
 	conn.close()
 	return result
+
+
+
+	#df = pd.read_sql(('select "Timestamp","Value" from "MyTable" '
+	#	'where "Timestamp" BETWEEN %(dstart)s AND %(dfinish)s'),
+	#db,params={"dstart":datetime(2014,6,24,16,0),"dfinish":datetime(2014,6,24,17,0)},
+	#index_col=['Timestamp'])
+
 
 def updateData():
 	print('Updating data... (currently unused)')
@@ -65,7 +86,7 @@ def updateData():
 	cursor = conn.cursor()
 
 def fetchUsername(uName):
-	print('Fetching username... ')
+	print('Fetching username... (currently unused)')
 	TABLE = 'moveUsers'
 	USER = uName
 
@@ -74,7 +95,7 @@ def fetchUsername(uName):
 	cursor = conn.cursor()
 
 	# Select a specified username from the user table and return the result, used for checking the existence of a user 
-	cursor.execute("SELECT user FROM ? WHERE user = ?", TABLE, USER).rowcount
+	cursor.execute("SELECT user FROM " + TABLE + " WHERE user = ?", USER).rowcount
 	usrCount = cursor.fetchall()
 	conn.close()
 	return usrCount
@@ -88,7 +109,7 @@ def fetchUserPWD(uName):
 	cursor = conn.cursor()
 
 	# Select the specified user's credentials such as hashed password and salt for authorisation
-	cursor.execute("SELECT user, password, salt FROM ? WHERE user = ?", TABLE, USER)
+	cursor.execute("SELECT user, password, salt FROM " + TABLE + " WHERE user = ?", USER)
 	usrCreds = cursor.fetchall()
 	# Close the open database connetion
 	conn.close()
