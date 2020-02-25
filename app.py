@@ -49,7 +49,6 @@ sensorNames = dbConnect.fetchSensorNames(DB_TABLE)
 sensorData = dbConnect.fetchData(DB_TABLE)
 
 
-
 # Temporary user login credentials, to be replaced with SQL server connection
 with open(".usrCreds") as f:
 	usrCreds = json.load(f)
@@ -80,7 +79,11 @@ auth = dash_auth.BasicAuth(
 	usrCreds
 )
 
-fig = go.Figure(data = [go.Scatter(x=sensorData.messageDate, y=sensorData.plotValues)])
+sens = sensorData[sensorData.sensorName == "Tem - Z03 - Top West (North Rail) - 498884"]
+sens.sort_values(by='messageDate', ascending = True, na_position = 'first')
+#sens = sensorData
+#sens.filter(items = "Tem - Z03 - Top West (North Rail) - 498884", axis = 0)
+fig = go.Figure(data = [go.Scatter(x=sens.messageDate, y=sens.plotValues)])
 
 app.layout = html.Div(children=[
 	html.H1(children='Hello Dash'),
@@ -96,6 +99,7 @@ app.layout = html.Div(children=[
 		options=[
 			{'label': i, 'value': i} for i in sensorNames.sensorName.unique()
 		],
+		value = sensorData.sensorName[4],
 		multi=True ),
 
 		# Date picker for selecting the date range for the data to be pulled from the DB
@@ -113,6 +117,11 @@ app.layout = html.Div(children=[
 	# Time lapse graph to be generated from the aggregated data
 	dcc.Graph(
 		id='time-lapse-graph',
+		#figure=fig
+	),
+
+	dcc.Graph(
+		id='time-lapse-graph2',
 		figure=fig
 	),
 
@@ -136,11 +145,11 @@ app.layout = html.Div(children=[
 
 # page layouts for a multi-page dashboard
 layout_page_1 = html.Div([
-
+	html.H4(children='Page 1')
 ])
 
 layout_page_2 = html.Div([
-
+	html.H4(children='Page 2')
 ])
 
 # Callback definitions
@@ -154,7 +163,7 @@ def update_figure(selected_sensor):
 	#filtered_df = sensorData[sensorData.messageDate > start_date]
 	#filtered_df = filtered_df[sensorData.messageDate < end_date]
 	#filtered_df = filtered_df[filtered_df.sensorName == selected_sensor]
-	filtered_df = sensorData[sensorData['sensorName'] == selected_sensor]
+	filtered_df = sensorData[sensorData.sensorName == selected_sensor]
 
 	fig = go.Figure(data = [go.Scatter(x=filtered_df.messageDate, y=filtered_df.plotValues)])
 
