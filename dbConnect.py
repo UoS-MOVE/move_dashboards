@@ -38,11 +38,11 @@ def fetchSensorNames(dbTable):
 
 	# Establish a connection to the database using the prepared function and declare a new cursor from it
 	conn = dbInit()
-	cursor = conn.cursor()
+	#cursor = conn.cursor()
 	
 	# Select all available data from a specified table using specified parameters to filter the data
 	
-	result = pd.read_sql("SELECT DISTINCT sensorName FROM " + dbTable + "", conn)	
+	result = pd.read_sql("SELECT DISTINCT sensorName FROM " + dbTable + " WHERE networkID = 58947", conn)	
 	print('Sensor names successfully fetched')
 
 	conn.close()
@@ -53,11 +53,11 @@ def fetchData(dbTable):
 
 	# Establish a connection to the database using the prepared function and declare a new cursor from it
 	conn = dbInit()
-	cursor = conn.cursor()
+	#cursor = conn.cursor()
 
 	# Select all available data from a specified table using specified parameters to filter the data	
 	#result = pd.read_sql("SELECT sensorName, plotValues, messageDate FROM " + dbTable + " WHERE messageDate < ? AND messageDate > ?", conn, params={ startDate, endDate})
-	result = pd.read_sql("SELECT sensorName, plotValues, messageDate FROM " + dbTable + "", conn)
+	result = pd.read_sql("SELECT sensorName, plotValues, messageDate FROM " + dbTable + " WHERE networkID = 58947", conn)
 	print('Sensor data successfully fetched')
 
 	#result = cursor.fetchall()
