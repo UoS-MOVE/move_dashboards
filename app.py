@@ -180,13 +180,13 @@ sched = BackgroundScheduler()
 
 # Fetch sensor names every hour
 @sched.scheduled_job('interval', minutes=60)
-def timed_job():
+def timed_job_60():
 	print('This job is run every 60 minutes.')
 	sensorNames = dbConnect.fetchSensorNames(DB_TABLE)
 
 # Fetch sensor data every 15 minutes from the database
 @sched.scheduled_job('interval', minutes=15)
-def timed_job():
+def timed_job_15():
 	print('This job is run every 15 minutes.')
 	sensorData = dbConnect.fetchData(DB_TABLE)
 
