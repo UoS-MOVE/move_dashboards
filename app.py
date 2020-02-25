@@ -13,8 +13,8 @@
 import os
 import pyodbc
 import traceback 
-import datetime as dt
 
+import datetime as dt
 from datetime import date
 from datetime import datetime
 
@@ -40,13 +40,11 @@ import dbConnect
 
 # Variable declaration
 DB_TABLE = "sensorData"
-END_DATE = dt.date.today()
-START_DATE = dt.date.today() - dt.timedelta(days=7)
+END_DATE = date.today()
+START_DATE = date.today() - dt.timedelta(days=7)
 
 
-# Pull the initial values
-#sensorNames = pd.DataFrame(dbConnect.fetchSensorNames(DB_TABLE))
-#sensorData = pd.DataFrame(dbConnect.fetchData(DB_TABLE))
+# Initial data pull from the database fo rthe sensor names and sensor data
 sensorNames = dbConnect.fetchSensorNames(DB_TABLE)
 sensorData = dbConnect.fetchData(DB_TABLE)
 
@@ -56,25 +54,24 @@ sensorData = dbConnect.fetchData(DB_TABLE)
 with open(".usrCreds") as f:
 	usrCreds = json.load(f)
 
-#external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
+
+# Define functions 
 def generate_table(dataframe, max_rows=10):
-    return html.Table(
-        # Header
-        [html.Tr([html.Th(col) for col in dataframe.columns])] +
+	return html.Table(
+		# Header
+		[html.Tr([html.Th(col) for col in dataframe.columns])] +
 
-        # Body
-        [html.Tr([
-            html.Td(dataframe.iloc[i][col]) for col in dataframe.columns
-        ]) for i in range(min(len(dataframe), max_rows))]
-    )
-
-
+		# Body
+		[html.Tr([
+			html.Td(dataframe.iloc[i][col]) for col in dataframe.columns
+		]) for i in range(min(len(dataframe), max_rows))]
+	)
 
 
-
+#external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
 #app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
-app = dash.Dash()
+app = dash.Dash(__name__)
 
 # Define the credentials for authorised users using key:value pairs
 ## Update to use Database connector
@@ -93,35 +90,33 @@ app.layout = html.Div(children=[
 	'''),
 
 	html.Div(children=[
+		# Dropdown selector for the available sensors for the time-series chart
 		html.Label('Sensor Selector'),
 		dcc.Dropdown(id='sensor-select-dropdown', 
 		options=[
 			{'label': i, 'value': i} for i in sensorNames.sensorName.unique()
-		], 
-		multi=True )
-		]),
+		],
+		multi=True ),
 
+		# Date picker for selecting the date range for the data to be pulled from the DB
 		dcc.DatePickerRange(
 			id='date-picker',
 			month_format='YYYY-MM-DD',
+			display_format='YY, MMM Do',
 			end_date_placeholder_text='YYYY-MM-DD',
 			start_date=START_DATE,
 			end_date=END_DATE,
 		),
+	]),
 
 
+	# Time lapse graph to be generated from the aggregated data
 	dcc.Graph(
 		id='time-lapse-graph',
-		figure={
-			'data': [
-				{'x': [1, 2, 3], 'y': [4, 1, 2], 'type': 'bar', 'name': 'SF'},
-				{'x': [1, 2, 3], 'y': [2, 4, 5], 'type': 'bar', 'name': u'Montréal'},
-			],
-			'layout': {
-				'title': 'Dash Data Visualization'
-			}
-		}
+		figure=fig
 	),
+
+	# Test slider for experimenting with fine-tuning selected data
 	dcc.Slider(
 		id='date-slider',
 		min=sensorData['messageDate'].min(),
@@ -130,43 +125,53 @@ app.layout = html.Div(children=[
 	),
 
 
-	dcc.Graph(
-		id='example-graph-2',
-		figure=fig
-	),
-
-
-
-	html.H4(children='Sensors'),
-    dcc.Dropdown(id='dropdown', options=[
-        {'label': i, 'value': i} for i in sensorNames.sensorName.unique()
-    ], multi=True, placeholder='Filter by sensor name...'),
-    html.Div(id='table-container')
-	
-
+	# Dropdown and table generation for the available sensors
+	html.H4(children='Sensor Table'),
+	dcc.Dropdown(id='sensor-table-dropdown', options=[
+		{'label': i, 'value': i} for i in sensorNames.sensorName.unique()
+	], multi=True, placeholder='Filter by sensor name...'),
+	html.Div(id='table-container')
 
 ])
 
+# page layouts for a multi-page dashboard
+layout_page_1 = html.Div([
+
+])
+
+layout_page_2 = html.Div([
+
+])
 
 # Callback definitions
 @app.callback(
 	Output('time-lapse-graph', 'figure'),
-	[Input('sensor-select-dropdown', 'value')]
+	[Input('sensor-select-dropdown', 'value')],
+	#[Input('date-picker', 'start_date')],
+	#[Input('date-picker', 'end_date')]
 )
-def update_figure(selected_date):
-	filtered_df = sensorData[sensorData.messageDate == selected_date]
+def update_figure(selected_sensor):
+	#filtered_df = sensorData[sensorData.messageDate > start_date]
+	#filtered_df = filtered_df[sensorData.messageDate < end_date]
+	#filtered_df = filtered_df[filtered_df.sensorName == selected_sensor]
+	filtered_df = sensorData[sensorData['sensorName'] == selected_sensor]
+
+	fig = go.Figure(data = [go.Scatter(x=filtered_df.messageDate, y=filtered_df.plotValues)])
+
+	#return fig
 
 
-
+# Callback for sensor select dropdown
 @app.callback(
-    dash.dependencies.Output('table-container', 'children'),
-    [dash.dependencies.Input('dropdown', 'value')])
+	dash.dependencies.Output('table-container', 'children'),
+	[dash.dependencies.Input('sensor-table-dropdown', 'value')]
+)
 def display_table(dropdown_value):
-    if dropdown_value is None:
-        return generate_table(sensorNames)
+	if dropdown_value is None:
+		return generate_table(sensorData)
 
-    dff = sensorData[sensorNames.sensorName.str.contains('|'.join(dropdown_value))]
-    return generate_table(dff)
+	dff = sensorData[sensorData.sensorName.str.contains('|'.join(dropdown_value))]
+	return generate_table(dff)
 
 
 
@@ -176,15 +181,16 @@ sched = BackgroundScheduler()
 # Fetch sensor names every hour
 @sched.scheduled_job('interval', minutes=60)
 def timed_job():
-	print('This job is run every minute.')
-	#sensorNames = pd.read_sql(dbConnect.fetchSensorNames(DB_TABLE))
+	print('This job is run every 60 minutes.')
+	sensorNames = dbConnect.fetchSensorNames(DB_TABLE)
+
 # Fetch sensor data every 15 minutes from the database
 @sched.scheduled_job('interval', minutes=15)
 def timed_job():
 	print('This job is run every 15 minutes.')
-	#sensorData = pd.read_sql(dbConnect.fetchData(DB_TABLE, "sensorName", sensorNames['sensorName'].at[0], START_DATE, END_DATE))
+	sensorData = dbConnect.fetchData(DB_TABLE)
 
-# Start the scheduler
+# Start the scheduler for the fetch jobs
 sched.start()
 
 
