@@ -41,13 +41,10 @@ def fetchSensorNames(dbTable):
 	cursor = conn.cursor()
 	
 	# Select all available data from a specified table using specified parameters to filter the data
-	#cursor.execute("SELECT DISTINCT sensorName FROM " + dbTable + "")
 	
-	result = pd.read_sql("SELECT DISTINCT sensorName FROM " + dbTable + "", conn)
-	
-	#result = cursor.fetchall()
-	#result = pd.DataFrame(cursor.fetchall())
-	#result.columns = cursor.columns()
+	result = pd.read_sql("SELECT DISTINCT sensorName FROM " + dbTable + "", conn)	
+	print('Sensor names successfully fetched')
+
 	conn.close()
 	return result
 
@@ -58,13 +55,11 @@ def fetchData(dbTable):
 	conn = dbInit()
 	cursor = conn.cursor()
 
-	# Select all available data from a specified table using specified parameters to filter the data
-	#cursor.execute("SELECT sensorName, plotValues, messageDate FROM " + dbTable + " WHERE messageDate < ? AND messageDate > ?", startDate, endDate)
-	#cursor.execute("SELECT sensorName, plotValues, messageDate FROM " + dbTable + "")
-	
+	# Select all available data from a specified table using specified parameters to filter the data	
 	#result = pd.read_sql("SELECT sensorName, plotValues, messageDate FROM " + dbTable + " WHERE messageDate < ? AND messageDate > ?", conn, params={ startDate, endDate})
 	result = pd.read_sql("SELECT sensorName, plotValues, messageDate FROM " + dbTable + "", conn)
-	
+	print('Sensor data successfully fetched')
+
 	#result = cursor.fetchall()
 	conn.close()
 	return result
