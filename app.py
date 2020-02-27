@@ -79,10 +79,6 @@ auth = dash_auth.BasicAuth(
 	usrCreds
 )
 
-# Hardcode graph values to test data sorting from DB
-sens = sensorData[sensorData.sensorName == "Tem - Z03 - Top West (North Rail) - 498884"]
-sens = sens.sort_values(by='messageDate')
-fig = go.Figure(data = [go.Scatter(x=sens.messageDate, y=sens.plotValues)])
 
 app.layout = html.Div(children=[
 	html.H1(children='Hello Dash'),
@@ -118,11 +114,6 @@ app.layout = html.Div(children=[
 	dcc.Graph(
 		id='time-lapse-graph',
 		#figure=fig
-	),
-
-	dcc.Graph(
-		id='time-lapse-graph2',
-		figure=fig
 	),
 
 	# Test slider for experimenting with fine-tuning selected data
