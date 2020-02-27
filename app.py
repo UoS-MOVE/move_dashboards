@@ -79,10 +79,9 @@ auth = dash_auth.BasicAuth(
 	usrCreds
 )
 
+# Hardcode graph values to test data sorting from DB
 sens = sensorData[sensorData.sensorName == "Tem - Z03 - Top West (North Rail) - 498884"]
-sens.sort_values(by='messageDate', ascending = True, na_position = 'first')
-#sens = sensorData
-#sens.filter(items = "Tem - Z03 - Top West (North Rail) - 498884", axis = 0)
+sens = sens.sort_values(by='messageDate')
 fig = go.Figure(data = [go.Scatter(x=sens.messageDate, y=sens.plotValues)])
 
 app.layout = html.Div(children=[
@@ -96,11 +95,12 @@ app.layout = html.Div(children=[
 		# Dropdown selector for the available sensors for the time-series chart
 		html.Label('Sensor Selector'),
 		dcc.Dropdown(id='sensor-select-dropdown', 
-		options=[
-			{'label': i, 'value': i} for i in sensorNames.sensorName.unique()
-		],
-		value = sensorData.sensorName[4],
-		multi=True ),
+			options=[
+				{'label': i, 'value': i} for i in sensorNames.sensorName.unique()
+			],
+			value = sensorData.sensorName[4],
+			multi=True
+		),
 
 		# Date picker for selecting the date range for the data to be pulled from the DB
 		dcc.DatePickerRange(
@@ -126,12 +126,12 @@ app.layout = html.Div(children=[
 	),
 
 	# Test slider for experimenting with fine-tuning selected data
-	dcc.Slider(
-		id='date-slider',
-		min=sensorData['messageDate'].min(),
-		max=sensorData['messageDate'].max(),
-		value=sensorData['messageDate'].min(),
-	),
+	#dcc.Slider(
+	#	id='date-slider',
+	#	min=sensorData['messageDate'].min(),
+	#	max=sensorData['messageDate'].max(),
+	#	value=sensorData['messageDate'].min(),
+	#),
 
 
 	# Dropdown and table generation for the available sensors
@@ -163,12 +163,44 @@ def update_figure(selected_sensor):
 	#filtered_df = sensorData[sensorData.messageDate > start_date]
 	#filtered_df = filtered_df[sensorData.messageDate < end_date]
 	#filtered_df = filtered_df[filtered_df.sensorName == selected_sensor]
-	filtered_df = sensorData[sensorData.sensorName == selected_sensor]
+	#print("sensorData.sensorName[4] = " + sensorData.sensorName[4])
+	#print("selected_sensor = " + selected_sensor)
+	
+	if isinstance(selected_sensor, str):
+		filtered_df = sensorData[sensorData.sensorName == selected_sensor]
+	else:
+		filtered_df = sensorData[sensorData.sensorName.isin(selected_sensor)]
 
-	fig = go.Figure(data = [go.Scatter(x=filtered_df.messageDate, y=filtered_df.plotValues)])
+	# TODO: Move data sorting to DB handler
+	filtered_df = filtered_df.sort_values(by='messageDate')
 
-	#return fig
 
+	traces = []
+	for i in filtered_df.sensorName.unique():
+		df_by_sensor = filtered_df[filtered_df['sensorName'] == i]
+		traces.append(dict(
+			x=df_by_sensor['messageDate'],
+			y=df_by_sensor['plotValues'],
+			text=df_by_sensor['sensorName'],
+			#mode='markers',
+			#opacity=0.7,
+			#marker={
+			#	'size': 15,
+			#	'line': {'width': 0.5, 'color': 'white'}
+			#},
+			name=i
+		))
+
+	return {
+		'data': traces,
+		'layout': dict(
+			title = 'Sensor data',
+			#margin={'l': 40, 'b': 40, 't': 10, 'r': 10},
+			#legend={'x': 0, 'y': 1},
+			#hovermode='closest',
+			#transition = {'duration': 500},
+		)
+	}
 
 # Callback for sensor select dropdown
 @app.callback(
