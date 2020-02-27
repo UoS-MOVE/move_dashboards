@@ -116,14 +116,6 @@ app.layout = html.Div(children=[
 		#figure=fig
 	),
 
-	# Test slider for experimenting with fine-tuning selected data
-	#dcc.Slider(
-	#	id='date-slider',
-	#	min=sensorData['messageDate'].min(),
-	#	max=sensorData['messageDate'].max(),
-	#	value=sensorData['messageDate'].min(),
-	#),
-
 
 	# Dropdown and table generation for the available sensors
 	html.H4(children='Sensor Table'),
@@ -153,9 +145,6 @@ layout_page_2 = html.Div([
 def update_figure(selected_sensor):
 	#filtered_df = sensorData[sensorData.messageDate > start_date]
 	#filtered_df = filtered_df[sensorData.messageDate < end_date]
-	#filtered_df = filtered_df[filtered_df.sensorName == selected_sensor]
-	#print("sensorData.sensorName[4] = " + sensorData.sensorName[4])
-	#print("selected_sensor = " + selected_sensor)
 	
 	if isinstance(selected_sensor, str):
 		filtered_df = sensorData[sensorData.sensorName == selected_sensor]
