@@ -81,6 +81,14 @@ auth = dash_auth.BasicAuth(
 
 
 app.layout = html.Div(children=[
+	
+	dcc.Tabs(id="tabs", value='tab-1', children=[
+		dcc.Tab(label='Tab one', value='tab-1'),
+		dcc.Tab(label='Tab two', value='tab-2'),
+		dcc.Tab(label='Tab three', value='tab-3'),
+	]),
+	html.Div(id='tabs-content'),
+	
 	html.H1(children='Hello Dash'),
 
 	html.Div(children='''
@@ -102,7 +110,7 @@ app.layout = html.Div(children=[
 		dcc.DatePickerRange(
 			id='date-picker',
 			month_format='YYYY-MM-DD',
-			display_format='YY, MMM Do',
+			display_format='YYYY-MM-DD',
 			end_date_placeholder_text='YYYY-MM-DD',
 			start_date=START_DATE,
 			end_date=END_DATE,
@@ -136,6 +144,24 @@ layout_page_2 = html.Div([
 ])
 
 # Callback definitions
+
+
+@app.callback(Output('tabs-content', 'children'),
+			  [Input('tabs', 'value')])
+def render_content(tab):
+	if tab == 'tab-1':
+		return html.Div([
+			html.H3('Tab content 1')
+		])
+	elif tab == 'tab-2':
+		return html.Div([
+			html.H3('Tab content 2')
+		])
+	elif tab == 'tab-3':
+		return html.Div([
+			html.H3('Tab content 3')
+		])
+
 @app.callback(
 	Output('time-lapse-graph', 'figure'),
 	[Input('sensor-select-dropdown', 'value')],
@@ -177,8 +203,8 @@ def update_figure(selected_sensor):
 			title = 'Sensor data',
 			#margin={'l': 40, 'b': 40, 't': 10, 'r': 10},
 			#legend={'x': 0, 'y': 1},
-			#hovermode='closest',
-			#transition = {'duration': 500},
+			hovermode='closest',
+			transition = {'duration': 500},
 		)
 	}
 
@@ -195,20 +221,19 @@ def display_table(dropdown_value):
 	return generate_table(dff)
 
 
-
 # Define scheduled functions
 sched = BackgroundScheduler()
 
 # Fetch sensor names every hour
 @sched.scheduled_job('interval', minutes=60)
 def timed_job_60():
-	print('This job is run every 60 minutes.')
+	print('(Scheduled Job) This job is run every 60 minutes.')
 	sensorNames = dbConnect.fetchSensorNames(DB_TABLE)
 
 # Fetch sensor data every 15 minutes from the database
 @sched.scheduled_job('interval', minutes=15)
 def timed_job_15():
-	print('This job is run every 15 minutes.')
+	print('(Scheduled Job) This job is run every 15 minutes.')
 	sensorData = dbConnect.fetchData(DB_TABLE)
 
 # Start the scheduler for the fetch jobs
