@@ -32,46 +32,48 @@ def dbInit():
 		return 500
 	else:
 		print('Successfully connected to database')
+		# Return DB connection object
 		return cnxn
+
+# Fetch sensor names from the database 
 def fetchSensorNames(dbTable):
 	print('Fetching sensor names... ')
 
 	# Establish a connection to the database using the prepared function and declare a new cursor from it
 	conn = dbInit()
-	#cursor = conn.cursor()
 	
 	# Select all available data from a specified table using specified parameters to filter the data
-	
 	result = pd.read_sql("SELECT DISTINCT sensorName FROM " + dbTable + " WHERE networkID = 58947", conn)	
 	print('Sensor names successfully fetched')
 
+	# Close DB connection
 	conn.close()
+	# Return the retrieved values
 	return result
 
-def fetchData(dbTable):
+# Fetch sensor data from the database
+def fetchData(dbTable, startDate, endDate):
 	print('Fetching senor data... ')
 
 	# Establish a connection to the database using the prepared function and declare a new cursor from it
 	conn = dbInit()
-	#cursor = conn.cursor()
-
+	
 	# Select all available data from a specified table using specified parameters to filter the data	
-	#result = pd.read_sql("SELECT sensorName, plotValues, messageDate FROM " + dbTable + " WHERE messageDate < ? AND messageDate > ?", conn, params={ startDate, endDate})
-	result = pd.read_sql("SELECT sensorName, plotValues, messageDate FROM " + dbTable + " WHERE networkID = 58947", conn)
+	result = pd.read_sql("SELECT sensorName, plotValues, messageDate FROM " + dbTable + " WHERE networkID = 58947 AND messageDate < ? AND messageDate > ?", conn, params = {startDate, endDate})
+	#result = pd.read_sql("SELECT sensorName, plotValues, messageDate FROM " + dbTable + " WHERE networkID = 58947", conn)
 	print('Sensor data successfully fetched')
 
-	#result = cursor.fetchall()
+	# Close DB connection
 	conn.close()
+
+	# Sort fetched data by date in ascending order
+	result = result.sort_values(by='messageDate')
+	# Return the retrieved values
 	return result
 
-
-
-	#df = pd.read_sql(('select "Timestamp","Value" from "MyTable" '
-	#	'where "Timestamp" BETWEEN %(dstart)s AND %(dfinish)s'),
-	#db,params={"dstart":datetime(2014,6,24,16,0),"dfinish":datetime(2014,6,24,17,0)},
-	#index_col=['Timestamp'])
-
-
+# Updates data in the DB
+# May not be implemented, depends on implementation
+# Not currently active, and needs to be rewritten using pd.read_sql()
 def updateData():
 	print('Updating data... (currently unused)')
 	TABLE = 'gatewayData'
@@ -80,6 +82,8 @@ def updateData():
 	conn = dbInit()
 	cursor = conn.cursor()
 
+# Fetch usernames
+# Not currently active, and needs to be rewritten using pd.read_sql()
 def fetchUsername(uName):
 	print('Fetching username... (currently unused)')
 	TABLE = 'moveUsers'
@@ -92,8 +96,14 @@ def fetchUsername(uName):
 	# Select a specified username from the user table and return the result, used for checking the existence of a user 
 	cursor.execute("SELECT user FROM " + TABLE + " WHERE user = ?", USER).rowcount
 	usrCount = cursor.fetchall()
+
+	# Close DB connection
 	conn.close()
+	# Return the retrieved values
 	return usrCount
+
+# Fetch user credentials
+# Not currently active, and needs to be rewritten using pd.read_sql()
 def fetchUserPWD(uName):
 	print('Fetching user credentials... ')
 	TABLE = 'moveUsers'
@@ -106,6 +116,7 @@ def fetchUserPWD(uName):
 	# Select the specified user's credentials such as hashed password and salt for authorisation
 	cursor.execute("SELECT user, password, salt FROM " + TABLE + " WHERE user = ?", USER)
 	usrCreds = cursor.fetchall()
+	
 	# Close the open database connetion
 	conn.close()
 	# Return the retrieved values
