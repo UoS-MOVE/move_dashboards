@@ -18,7 +18,6 @@ import datetime as dt
 from datetime import date
 from datetime import datetime
 
-
 import pandas as pd
 import json
 
@@ -29,7 +28,6 @@ import dash_html_components as html
 import dash_auth
 from dash.dependencies import Input, Output
 import plotly.graph_objects as go
-
 
 # Import process scheduler for funning funtions concurrently
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -44,10 +42,10 @@ END_DATE = date.today()
 START_DATE = date.today() - dt.timedelta(days=7)
 
 
-# Initial data pull from the database fo rthe sensor names and sensor data
+# Initial data pull from the database for the sensor names and sensor data
 sensorNames = dbConnect.fetchSensorNames(DB_TABLE)
-sensorData = dbConnect.fetchData(DB_TABLE)
-
+#sensorData = dbConnect.fetchData(DB_TABLE)
+sensorData = dbConnect.fetchData(DB_TABLE, START_DATE, END_DATE)
 
 # Temporary user login credentials, to be replaced with SQL server connection
 with open(".usrCreds") as f:
@@ -102,7 +100,7 @@ app.layout = html.Div(children=[
 			options=[
 				{'label': i, 'value': i} for i in sensorNames.sensorName.unique()
 			],
-			value = sensorData.sensorName[4],
+			value = sensorNames.sensorName[4],
 			multi=True
 		),
 
@@ -143,9 +141,8 @@ layout_page_2 = html.Div([
 	html.H4(children='Page 2')
 ])
 
+
 # Callback definitions
-
-
 @app.callback(Output('tabs-content', 'children'),
 			  [Input('tabs', 'value')])
 def render_content(tab):
@@ -164,11 +161,12 @@ def render_content(tab):
 
 @app.callback(
 	Output('time-lapse-graph', 'figure'),
-	[Input('sensor-select-dropdown', 'value')],
-	#[Input('date-picker', 'start_date')],
-	#[Input('date-picker', 'end_date')]
+	[Input('sensor-select-dropdown', 'value'),
+	#[Input('date-picker', 'value')],
+	Input('date-picker', 'start_date'),
+	Input('date-picker', 'end_date')]
 )
-def update_figure(selected_sensor):
+def update_figure(selected_sensor, start_date, end_date):
 	#filtered_df = sensorData[sensorData.messageDate > start_date]
 	#filtered_df = filtered_df[sensorData.messageDate < end_date]
 	
@@ -177,8 +175,8 @@ def update_figure(selected_sensor):
 	else:
 		filtered_df = sensorData[sensorData.sensorName.isin(selected_sensor)]
 
-	# TODO: Move data sorting to DB handler
-	filtered_df = filtered_df.sort_values(by='messageDate')
+	# Moved to DB handler
+	#filtered_df = filtered_df.sort_values(by='messageDate')
 
 
 	traces = []
@@ -234,7 +232,18 @@ def timed_job_60():
 @sched.scheduled_job('interval', minutes=15)
 def timed_job_15():
 	print('(Scheduled Job) This job is run every 15 minutes.')
-	sensorData = dbConnect.fetchData(DB_TABLE)
+	#sensorData = dbConnect.fetchData(DB_TABLE)
+	sensorData = dbConnect.fetchData(DB_TABLE, START_DATE, END_DATE)
+
+
+
+# TESTING: Pull sensor data every 30 seconds
+@sched.scheduled_job('interval', seconds=30)
+def timed_job_30():
+	print('(Scheduled Job) This job is run every 30 seconds.')
+	#sensorData = dbConnect.fetchData(DB_TABLE)
+	sensorData = dbConnect.fetchData(DB_TABLE, START_DATE, END_DATE)
+
 
 # Start the scheduler for the fetch jobs
 sched.start()
