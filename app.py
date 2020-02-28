@@ -132,15 +132,6 @@ app.layout = html.Div(children=[
 
 ])
 
-# page layouts for a multi-page dashboard
-layout_page_1 = html.Div([
-	html.H4(children='Page 1')
-])
-
-layout_page_2 = html.Div([
-	html.H4(children='Page 2')
-])
-
 
 # Callback definitions
 @app.callback(Output('tabs-content', 'children'),
