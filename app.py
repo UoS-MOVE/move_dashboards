@@ -35,6 +35,8 @@ from apscheduler.schedulers.background import BackgroundScheduler
 # Custom functions
 import dbConnect
 
+# Imported for debugging in VS Code
+import flask
 
 # Variable declaration
 DB_TABLE = "sensorData"
@@ -68,7 +70,8 @@ def generate_table(dataframe, max_rows=10):
 #external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
 #app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
-app = dash.Dash(__name__)
+f_app = flask.Flask(__name__)
+app = dash.Dash(__name__, server=f_app)
 
 # Define the credentials for authorised users using key:value pairs
 ## Update to use Database connector
@@ -229,11 +232,11 @@ def timed_job_15():
 
 
 # TESTING: Pull sensor data every 30 seconds
-@sched.scheduled_job('interval', seconds=30)
-def timed_job_30():
-	print('(Scheduled Job) This job is run every 30 seconds.')
-	#sensorData = dbConnect.fetchData(DB_TABLE)
-	sensorData = dbConnect.fetchData(DB_TABLE, START_DATE, END_DATE)
+#@sched.scheduled_job('interval', seconds=30)
+#def timed_job_30():
+#	print('(Scheduled Job) This job is run every 30 seconds.')
+#	#sensorData = dbConnect.fetchData(DB_TABLE)
+#	sensorData = dbConnect.fetchData(DB_TABLE, START_DATE, END_DATE)
 
 
 # Start the scheduler for the fetch jobs
