@@ -126,6 +126,11 @@ app.layout = html.Div(children=[
 	),
 
 
+	dcc.Graph(
+		id='bar-graph',
+		#figure=fig
+	),
+
 	# Dropdown and table generation for the available sensors
 	html.H4(children='Sensor Table'),
 	dcc.Dropdown(id='sensor-table-dropdown', options=[
