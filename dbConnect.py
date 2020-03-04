@@ -59,7 +59,7 @@ def fetchData(dbTable, startDate, endDate):
 	conn = dbInit()
 	
 	# Select all available data from a specified table using specified parameters to filter the data	
-	result = pd.read_sql("SELECT sensorName, plotValues, messageDate FROM " + dbTable + " WHERE networkID = 58947 AND messageDate < ? AND messageDate > ?", conn, params = {startDate, endDate})
+	result = pd.read_sql("SELECT sensorName, plotValues, messageDate FROM " + dbTable + " WHERE networkID = 58947 AND messageDate < ? AND messageDate > ? ORDER BY messageDate DESC", conn, params = {startDate, endDate})
 	#result = pd.read_sql("SELECT sensorName, plotValues, messageDate FROM " + dbTable + " WHERE networkID = 58947", conn)
 	print('Sensor data successfully fetched')
 
