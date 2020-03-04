@@ -55,7 +55,7 @@ with open(".usrCreds") as f:
 
 
 # Define functions 
-def generate_table(dataframe, max_rows=10):
+def generate_table(dataframe, max_rows=1000):
 	return html.Table(
 		# Header
 		[html.Tr([html.Th(col) for col in dataframe.columns])] +
@@ -122,13 +122,11 @@ app.layout = html.Div(children=[
 	# Time lapse graph to be generated from the aggregated data
 	dcc.Graph(
 		id='time-lapse-graph',
-		#figure=fig
 	),
 
 
 	dcc.Graph(
 		id='bar-graph',
-		#figure=fig
 	),
 
 	# Dropdown and table generation for the available sensors
@@ -197,7 +195,7 @@ def update_figure(selected_sensor, start_date, end_date):
 	return {
 		'data': traces,
 		'layout': dict(
-			title = 'Sensor data',
+			title = 'Temperature Data',
 			#margin={'l': 40, 'b': 40, 't': 10, 'r': 10},
 			#legend={'x': 0, 'y': 1},
 			hovermode='closest',
