@@ -41,13 +41,13 @@ import flask
 # Variable declaration
 DB_TABLE = "sensorData"
 END_DATE = date.today()
-START_DATE = date.today() - dt.timedelta(days=7)
+START_DATE = date.today() - dt.timedelta(days=30)
 
 
 # Initial data pull from the database for the sensor names and sensor data
 sensorNames = dbConnect.fetchSensorNames(DB_TABLE)
-#sensorData = dbConnect.fetchData(DB_TABLE)
-sensorData = dbConnect.fetchData(DB_TABLE, START_DATE, END_DATE)
+sensorData = dbConnect.fetchData(DB_TABLE)
+#sensorData = dbConnect.fetchDataRange(DB_TABLE, START_DATE, END_DATE)
 
 # Temporary user login credentials, to be replaced with SQL server connection
 with open(".usrCreds") as f:
@@ -156,24 +156,23 @@ def render_content(tab):
 			html.H3('Tab content 3')
 		])
 
+# Callback and update function for time series graph 01
 @app.callback(
 	Output('time-lapse-graph', 'figure'),
 	[Input('sensor-select-dropdown', 'value'),
-	#[Input('date-picker', 'value')],
 	Input('date-picker', 'start_date'),
 	Input('date-picker', 'end_date')]
 )
 def update_figure(selected_sensor, start_date, end_date):
-	#filtered_df = sensorData[sensorData.messageDate > start_date]
-	#filtered_df = filtered_df[sensorData.messageDate < end_date]
 	
-	if isinstance(selected_sensor, str):
-		filtered_df = sensorData[sensorData.sensorName == selected_sensor]
-	else:
-		filtered_df = sensorData[sensorData.sensorName.isin(selected_sensor)]
+	# Filter the data to only display results in the selected range
+	filtered_df = sensorData[sensorData.messageDate > start_date]
+	filtered_df = filtered_df[filtered_df.messageDate < end_date]
 
-	# Moved to DB handler
-	#filtered_df = filtered_df.sort_values(by='messageDate')
+	if isinstance(selected_sensor, str):
+		filtered_df = filtered_df[filtered_df.sensorName == selected_sensor]
+	else:
+		filtered_df = filtered_df[filtered_df.sensorName.isin(selected_sensor)]
 
 
 	traces = []
@@ -190,6 +189,54 @@ def update_figure(selected_sensor, start_date, end_date):
 			#	'line': {'width': 0.5, 'color': 'white'}
 			#},
 			name=i
+		))
+
+	return {
+		'data': traces,
+		'layout': dict(
+			title = 'Temperature Data',
+			#margin={'l': 40, 'b': 40, 't': 10, 'r': 10},
+			#legend={'x': 0, 'y': 1},
+			hovermode='closest',
+			transition = {'duration': 500},
+		)
+	}
+
+# Callback and update function for bar graph 01
+@app.callback(
+	Output('bar-graph', 'figure'),
+	#[Input('sensor-select-dropdown', 'value'),
+	#[Input('date-picker', 'value')],
+	#Input('date-picker', 'start_date'),
+	#Input('date-picker', 'end_date')]
+)
+def update_figure(selected_sensor, start_date, end_date):
+	
+	# Filter the data to only display results in the selected range
+	filtered_df = sensorData[sensorData.messageDate > start_date]
+	filtered_df = filtered_df[filtered_df.messageDate < end_date]
+
+	if isinstance(selected_sensor, str):
+		filtered_df = filtered_df[filtered_df.sensorName == selected_sensor]
+	else:
+		filtered_df = filtered_df[filtered_df.sensorName.isin(selected_sensor)]
+
+
+	traces = []
+	for i in filtered_df.sensorName.unique():
+		df_by_sensor = filtered_df[filtered_df['sensorName'] == i]
+		traces.append(dict(
+			x = df_by_sensor['messageDate'],
+			y = df_by_sensor['plotValues'],
+			text = df_by_sensor['sensorName'],
+			type = 'bar',
+			#mode = 'markers',
+			#opacity = 0.7,
+			#marker = {
+			#	'size': 15,
+			#	'line': {'width': 0.5, 'color': 'white'}
+			#},
+			name = i
 		))
 
 	return {
