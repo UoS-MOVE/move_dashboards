@@ -52,16 +52,34 @@ def fetchSensorNames(dbTable):
 	return result
 
 # Fetch sensor data from the database
-def fetchData(dbTable, startDate, endDate):
+def fetchData(dbTable):
 	print('Fetching senor data... ')
 
 	# Establish a connection to the database using the prepared function and declare a new cursor from it
 	conn = dbInit()
 	
-	# Select all available data from a specified table using specified parameters to filter the data	
+	# Select all available data from a specified table using specified parameters to filter the data
+	result = pd.read_sql("SELECT sensorName, plotValues, messageDate FROM " + dbTable + " WHERE networkID = 58947", conn)
+	print('Sensor Data: Success')
+
+	# Close DB connection
+	conn.close()
+
+	# Sort fetched data by date in ascending order
+	result = result.sort_values(by='messageDate')
+	# Return the retrieved values
+	return result
+
+# Fetch sensor data from the database within a specified date range
+def fetchDataRange(dbTable, startDate, endDate):
+	print('Fetching senor data... ')
+
+	# Establish a connection to the database using the prepared function and declare a new cursor from it
+	conn = dbInit()
+	
+	# Select all available data from a specified table using specified parameters to filter the data within a specified date range	
 	result = pd.read_sql("SELECT sensorName, plotValues, messageDate FROM " + dbTable + " WHERE networkID = 58947 AND messageDate < ? AND messageDate > ? ORDER BY messageDate DESC", conn, params = {startDate, endDate})
-	#result = pd.read_sql("SELECT sensorName, plotValues, messageDate FROM " + dbTable + " WHERE networkID = 58947", conn)
-	print('Sensor data successfully fetched')
+	print('Sensor Data Range: Success')
 
 	# Close DB connection
 	conn.close()
