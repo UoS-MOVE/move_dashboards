@@ -3,3 +3,5 @@
 .usrCreds
 __pycache__
 .dbCreds
+/Jupyter_Testing/*.png
+/Jupyter_Testing/*.csv
