@@ -37,11 +37,12 @@ import dbConnect
 
 # Imported for debugging in VS Code
 import flask
+from werkzeug.serving import WSGIRequestHandler
 
 # Variable declaration
 DB_TABLE = "sensorData"
 END_DATE = date.today()
-START_DATE = date.today() - dt.timedelta(days=30)
+START_DATE = date.today() - dt.timedelta(days=7)
 
 
 # Initial data pull from the database for the sensor names and sensor data
@@ -205,7 +206,7 @@ def update_figure(selected_sensor, start_date, end_date):
 # Callback and update function for bar graph 01
 @app.callback(
 	Output('bar-graph', 'figure'),
-	#[Input('sensor-select-dropdown', 'value'),
+	[Input('sensor-select-dropdown', 'value')]
 	#[Input('date-picker', 'value')],
 	#Input('date-picker', 'start_date'),
 	#Input('date-picker', 'end_date')]
@@ -295,4 +296,5 @@ sched.start()
 
 # Main function, starts the server instance and serves the prior content
 if __name__ == '__main__':
+	WSGIRequestHandler.protocol_version = "HTTP/1.1"
 	app.run_server(debug=True)
