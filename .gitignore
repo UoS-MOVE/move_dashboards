@@ -3,5 +3,6 @@
 .usrCreds
 __pycache__
 .dbCreds
+config/*.json
 /Jupyter_Testing/*.png
 /Jupyter_Testing/*.csv
