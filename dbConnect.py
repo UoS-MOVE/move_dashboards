@@ -14,6 +14,7 @@ import pandas as pd
 with open(".dbCreds") as f:
 	dbCreds = json.load(f)
 
+result = pd.DataFrame
 
 # Formatted connection string for the SQL DB.
 SQL_CONN_STR = 'DSN=Salford-SQL-Server;Database=salfordMOVE;Trusted_Connection=no;UID='+dbCreds['UNAME']+';PWD='+dbCreds['PWD']+';'
@@ -43,8 +44,8 @@ def fetchSensorNames(dbTable):
 	conn = dbInit()
 	
 	# Select all available data from a specified table using specified parameters to filter the data
-	result = pd.read_sql("SELECT DISTINCT sensorName FROM " + dbTable + " WHERE networkID = 58947", conn)	
-	print('Sensor names successfully fetched')
+	result = pd.read_sql("SELECT DISTINCT sensorName FROM " + dbTable + " WHERE networkID = 58947", conn)
+	#print('Sensor names successfully fetched')
 
 	# Close DB connection
 	conn.close()
@@ -52,7 +53,7 @@ def fetchSensorNames(dbTable):
 	return result
 
 # Fetch sensor data from the database
-def fetchData(dbTable):
+def fetchData(dbTable, networkID):
 	print('Fetching senor data... ')
 
 	# Establish a connection to the database using the prepared function and declare a new cursor from it
@@ -60,6 +61,22 @@ def fetchData(dbTable):
 	
 	# Select all available data from a specified table using specified parameters to filter the data
 	result = pd.read_sql("SELECT sensorName, plotValues, messageDate FROM " + dbTable + " WHERE networkID = 58947", conn)
+
+
+	conn.execute("EXEC [dbo].[PROC_GET_SENSOR_NAMES] @networkID = ?, @param_out = @out OUTPUT;", networkID)
+	rows = conn.fetchall()
+	while rows:
+		#print(rows)
+		if (result.empty):
+			result = rows
+		else:
+			result.append(rows)
+		
+		if conn.nextset():
+			rows = conn.fetchall()
+		else:
+			rows = None
+
 	print('Sensor Data: Success')
 
 	# Close DB connection
