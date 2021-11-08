@@ -5,3 +5,4 @@ __pycache__
 
 misc/jupyter_testing
 old
+.env
