@@ -5,6 +5,7 @@
 		}
 	],
 	"settings": {
-		"editor.detectIndentation": false
+        "editor.detectIndentation": false,
+        "jupyter.jupyterServerType": "remote"
 	}
 }
